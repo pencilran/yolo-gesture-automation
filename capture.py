@@ -17,7 +17,7 @@ current_class = "palm"
 camera = cv2.VideoCapture(0)
 
 if not camera.isOpened():
-    raise RuntimeError("摄像头打不开，请确认没有被其他程序占用。")
+    raise RuntimeError("Unable to open the camera. Make sure no other application is using it.")
 
 while True:
     ok, frame = camera.read()
@@ -41,7 +41,7 @@ while True:
     elif key == ord("s"):
         filename = f"{current_class}_{datetime.now():%Y%m%d_%H%M%S_%f}.jpg"
         cv2.imwrite(str(save_dir / filename), clean_frame)
-        print(f"已保存：{filename}")
+        print(f"Saved: {filename}")
     elif key in (ord("q"), 27):
         break
 

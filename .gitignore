@@ -4,14 +4,14 @@ __pycache__/
 .idea/
 .vscode/
 
-# 隐私数据与训练缓存不上传
+# Private data and training artifacts
 dataset/
 runs/
 
-# 自动下载的基础模型
+# Automatically downloaded base models
 yolo*.pt
 
-# 系统与编辑器临时文件
+# System and editor files
 .DS_Store
 Thumbs.db
 *.log
