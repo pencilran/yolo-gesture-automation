@@ -1,4 +1,4 @@
-"""清理采集画面并按类别划分 YOLO 训练集和验证集。"""
+"""Clean captured frames and split a YOLO dataset by class."""
 
 import random
 import shutil
@@ -30,7 +30,7 @@ def group_name(filename: str):
 
 
 def remove_capture_overlay(image):
-    """修复左上角采集器文字；不改变图片尺寸，因此标注坐标仍有效。"""
+    """Remove the old collector overlay without changing image dimensions."""
     height, width = image.shape[:2]
     mask = np.zeros((height, width), dtype=np.uint8)
     regions = [
@@ -57,7 +57,7 @@ def remove_capture_overlay(image):
 def main():
     output_dirs = (TRAIN_IMAGES, VAL_IMAGES, TRAIN_LABELS, VAL_LABELS)
     if any(folder.exists() and any(folder.iterdir()) for folder in output_dirs):
-        raise SystemExit("训练集或验证集文件夹已有内容；为防止覆盖，本次未执行。")
+        raise SystemExit("Train or validation folders already contain files; nothing was overwritten.")
     for folder in output_dirs:
         folder.mkdir(parents=True, exist_ok=True)
 
@@ -110,11 +110,11 @@ def main():
         "  2: thumb_up\n",
         encoding="utf-8",
     )
-    print("\n数据集整理完成")
+    print("\nDataset preparation complete")
     for line in summary[: len(groups) * 2 + 1]:
         print(line)
-    print(f"详细记录：{SUMMARY_FILE}")
-    print(f"训练配置：{DATA_CONFIG}")
+    print(f"Detailed summary: {SUMMARY_FILE}")
+    print(f"Training configuration: {DATA_CONFIG}")
 
 
 if __name__ == "__main__":

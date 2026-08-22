@@ -1,4 +1,4 @@
-"""YOLO 摄像头手势控制面板。"""
+"""Real-time YOLO camera gesture automation controller."""
 
 import time
 from pathlib import Path
@@ -35,7 +35,7 @@ def find_best_model():
     models = list(Path("runs").rglob("best.pt"))
     if not models:
         raise FileNotFoundError(
-            "没有找到正式模型 models/gesture_best.pt，也没有找到训练结果 best.pt。"
+            "No release model was found at models/gesture_best.pt, and no training result best.pt exists."
         )
     return max(models, key=lambda path: path.stat().st_mtime)
 
@@ -43,7 +43,7 @@ def find_best_model():
 def create_hand_detector():
     model_file = Path("models/hand_landmarker.task")
     if not model_file.exists():
-        raise FileNotFoundError(f"缺少左右手识别模型：{model_file}")
+        raise FileNotFoundError(f"Missing handedness detection model: {model_file}")
     options = mp.tasks.vision.HandLandmarkerOptions(
         base_options=mp.tasks.BaseOptions(
             model_asset_buffer=model_file.read_bytes()
@@ -63,7 +63,7 @@ def detect_handedness(detector, frame):
     if not result.handedness:
         return None
     detected = result.handedness[0][0].category_name
-    # 当前摄像头预览采用镜像显示，将模型标签换回使用者的真实左右手。
+    # The preview is mirrored, so swap the model label back to the user's actual hand.
     if detected == "Left":
         return "Right"
     if detected == "Right":
@@ -75,14 +75,14 @@ def main():
     global ALLOWED_HAND
 
     model_path = find_best_model()
-    print(f"使用模型：{model_path}")
+    print(f"Model: {model_path}")
     inference_device = 0 if torch.cuda.is_available() else "cpu"
-    print(f"推理设备：{'GPU' if inference_device == 0 else 'CPU'}")
+    print(f"Inference device: {'GPU' if inference_device == 0 else 'CPU'}")
     model = YOLO(str(model_path))
 
     camera = cv2.VideoCapture(0)
     if not camera.isOpened():
-        raise RuntimeError("摄像头打不开，请关闭其他占用摄像头的程序。")
+        raise RuntimeError("Unable to open the camera. Close any other application using it.")
 
     state = "READY"
     candidate = None
@@ -95,7 +95,7 @@ def main():
             if not ok:
                 break
 
-            # 采集数据时使用了镜像画面，正式识别保持一致。
+            # Training data was captured as mirrored frames; keep inference consistent.
             frame = cv2.flip(frame, 1)
             handedness = detect_handedness(hand_detector, frame)
             prediction = model.predict(
@@ -135,7 +135,7 @@ def main():
                     new_state = COMMANDS[gesture]
                     if new_state != state:
                         state = new_state
-                        print(f"控制动作：{gesture} -> {state}")
+                        print(f"Control action: {gesture} -> {state}")
                     last_action_time = time.time()
                     stable_count = 0
             else:

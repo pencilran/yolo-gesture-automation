@@ -1,4 +1,4 @@
-"""使用 MediaPipe 自动生成 YOLO 手势检测标注。"""
+"""Generate YOLO gesture detection annotations automatically with MediaPipe."""
 
 from pathlib import Path
 
@@ -26,7 +26,7 @@ def class_id_from_name(filename: str):
 
 
 def yolo_box(landmarks, padding=0.04):
-    """把归一化手部关键点转换成带少量边缘的 YOLO 方框。"""
+    """Convert normalized hand landmarks into a padded YOLO bounding box."""
     xs = [point.x for point in landmarks]
     ys = [point.y for point in landmarks]
     x1 = max(0.0, min(xs) - padding)
@@ -39,14 +39,14 @@ def yolo_box(landmarks, padding=0.04):
 def main():
     LABEL_DIR.mkdir(parents=True, exist_ok=True)
     if not MODEL_FILE.exists():
-        raise SystemExit(f"缺少手部检测模型：{MODEL_FILE}")
+        raise SystemExit(f"Missing hand detection model: {MODEL_FILE}")
 
     images = sorted(
         path for path in IMAGE_DIR.iterdir()
         if path.suffix.lower() in {".jpg", ".jpeg", ".png"}
     )
     if not images:
-        raise SystemExit(f"没有在 {IMAGE_DIR} 找到图片。")
+        raise SystemExit(f"No images were found in {IMAGE_DIR}.")
 
     failed = []
     labeled = 0
@@ -75,19 +75,19 @@ def main():
             class_id = class_id_from_name(image_path.name)
             if class_id is None:
                 unknown += 1
-                failed.append(f"未知文件名: {image_path.name}")
+                failed.append(f"Unknown filename: {image_path.name}")
                 continue
 
             image = cv2.imread(str(image_path))
             if image is None:
-                failed.append(f"图片无法读取: {image_path.name}")
+                failed.append(f"Unable to read image: {image_path.name}")
                 continue
 
             rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb)
             result = detector.detect(mp_image)
             if not result.hand_landmarks:
-                failed.append(f"没有检测到手: {image_path.name}")
+                failed.append(f"No hand detected: {image_path.name}")
                 continue
 
             box = yolo_box(result.hand_landmarks[0])
@@ -96,15 +96,15 @@ def main():
             labeled += 1
 
             if index % 50 == 0:
-                print(f"处理进度：{index}/{len(images)}")
+                print(f"Progress: {index}/{len(images)}")
 
     FAILED_FILE.write_text("\n".join(failed), encoding="utf-8")
-    print("\n自动标注完成")
-    print(f"有效手势标注：{labeled}")
-    print(f"背景空标注：{backgrounds}")
-    print(f"需要人工检查：{len(failed)}")
-    print(f"未知文件名：{unknown}")
-    print(f"检查清单：{FAILED_FILE}")
+    print("\nAutomatic labeling complete")
+    print(f"Valid gesture labels: {labeled}")
+    print(f"Empty background labels: {backgrounds}")
+    print(f"Files requiring review: {len(failed)}")
+    print(f"Unknown filenames: {unknown}")
+    print(f"Review list: {FAILED_FILE}")
 
 
 if __name__ == "__main__":
